@@ -1,2 +1,2 @@
-web: heroku-go-test
+web: bin/web
 
