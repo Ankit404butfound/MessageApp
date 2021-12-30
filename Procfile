@@ -1,1 +1,2 @@
-web: gunicorn app:web
+web: heroku-go-test
+
