@@ -122,6 +122,35 @@ func check_all_messages(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func check_messages_for_particular_user(w http.ResponseWriter, r *http.Request) {
+	var lst []Message
+	var db_password string
+	username := string(r.FormValue("username"))
+	password := string(r.FormValue("password"))
+	from_user := string(r.FormValue("from_user"))
+
+	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
+	fmt.Println(username)
+	if password != db_password {
+		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
+		return
+	}
+
+	row, _ := db.Query("SELECT * FROM messages where from_username in ($1, $2) and to_username in ($1, $2) and status = 'old' ORDER BY msg_id", username, from_user)
+
+	for row.Next() {
+		var temp Message
+		_ = row.Scan(&temp.MSG_ID, &temp.FROM_USERNAME, &temp.TO_USERNAME, &temp.MESSAGE)
+		lst = append(lst, temp)
+	}
+	jsn, _ := json.Marshal(lst)
+	if len(lst) > 0 {
+		fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
+	} else {
+		fmt.Fprint(w, "{\"status\": 200, \"data\": [], \"msg\": \"Success\"}")
+	}
+}
+
 func send_message(w http.ResponseWriter, r *http.Request) {
 	var db_password string
 	var db_username string
@@ -157,6 +186,7 @@ func main() {
 
 	http.HandleFunc("/check_new_messages", check_new_messages)
 	http.HandleFunc("/check_all_messages", check_all_messages)
+	http.HandleFunc("/check_messages_for_particular_user", check_messages_for_particular_user)
 	http.HandleFunc("/send_message", send_message)
 	http.HandleFunc("/create", createTable)
 	http.HandleFunc("/register", createUser)
