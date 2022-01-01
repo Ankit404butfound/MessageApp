@@ -100,14 +100,14 @@ func check_all_messages(w http.ResponseWriter, r *http.Request) {
 	username := string(r.FormValue("username"))
 	password := string(r.FormValue("password"))
 
-	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "' and status = 'old'").Scan(&db_password)
+	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
 
 	if password != db_password {
 		fmt.Fprint(w, "{status: 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
 		return
 	}
 
-	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1", username)
+	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 and status = 'old'", username)
 
 	for row.Next() {
 		var temp Message
