@@ -107,7 +107,7 @@ func check_all_messages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 and status = 'old'", username)
+	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 or from_username = $1 and status = 'old'", username)
 
 	for row.Next() {
 		var temp Message
