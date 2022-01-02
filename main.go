@@ -181,18 +181,23 @@ func send_message(w http.ResponseWriter, r *http.Request) {
 	message := string(r.FormValue("message"))
 	status := "new"
 
-	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + from_username + "'").Scan(&db_password)
+	row, _ := db.Query("SELECT password FROM users WHERE username ='" + from_username + "'")
+	row.Scan(&db_password)
+	row.Close()
 	if db_password != password {
 		fmt.Fprint(w, "{\"status\":404, \"msg\": \"Wrong password\"}")
 		return
 	} else {
-		_ = db.QueryRow("SELECT username FROM users WHERE username ='" + to_username + "'").Scan(&db_username)
+		row, _ = db.Query("SELECT username FROM users WHERE username ='" + to_username + "'")
+		row.Scan(&db_username)
+		row.Close()
 		fmt.Println(db_username)
 		if db_username == "" {
 			fmt.Fprint(w, "{\"status\":404, \"msg\": \"User not found\"}")
 			return
 		} else {
-			_, err := db.Query("INSERT INTO messages (from_username, to_username, message, status) VALUES ($1, $2, $3, $4)", from_username, to_username, message, status)
+			row, err := db.Query("INSERT INTO messages (from_username, to_username, message, status) VALUES ($1, $2, $3, $4)", from_username, to_username, message, status)
+			row.Close()
 			if err != nil {
 				fmt.Fprint(w, "{status: 404, \"msg\": \""+err.Error()+"\"}")
 			} else {
@@ -200,6 +205,7 @@ func send_message(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	//db.Close()
 }
 
