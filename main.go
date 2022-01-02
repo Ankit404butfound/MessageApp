@@ -185,10 +185,10 @@ func get_user(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, _ = db.Query("SELECT first_name, last_name FROM users WHERE username = $1", username)
+	row, _ = db.Query("SELECT first_name, last_name, username FROM users WHERE username = $1", username)
 
 	for row.Next() {
-		_ = row.Scan(&user.FIRSTNAME, &user.LASTNAME)
+		_ = row.Scan(&user.FIRSTNAME, &user.LASTNAME, &user.USERNAME)
 	}
 	row.Close()
 	jsn, _ := json.Marshal(user)
