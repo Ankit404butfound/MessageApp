@@ -183,6 +183,7 @@ func send_message(w http.ResponseWriter, r *http.Request) {
 
 	row, _ := db.Query("SELECT password FROM users WHERE username ='" + from_username + "'")
 	row.Scan(&db_password)
+	fmt.Println(db_password)
 	row.Close()
 	if db_password != password {
 		fmt.Fprint(w, "{\"status\":404, \"msg\": \"Wrong password\"}")
