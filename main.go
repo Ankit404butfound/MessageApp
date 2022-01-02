@@ -170,10 +170,11 @@ func check_messages_for_particular_user(w http.ResponseWriter, r *http.Request) 
 func get_user(w http.ResponseWriter, r *http.Request) {
 	var user User
 	var db_password string
+	by_username := string(r.FormValue("by_username"))
 	username := string(r.FormValue("username"))
 	password := string(r.FormValue("password"))
 
-	row, _ := db.Query("SELECT password FROM users WHERE username ='" + username + "'")
+	row, _ := db.Query("SELECT password FROM users WHERE username ='" + by_username + "'")
 	for row.Next() {
 		row.Scan(&db_password)
 	}
