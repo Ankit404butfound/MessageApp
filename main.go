@@ -182,7 +182,9 @@ func send_message(w http.ResponseWriter, r *http.Request) {
 	status := "new"
 
 	row, _ := db.Query("SELECT password FROM users WHERE username ='" + from_username + "'")
-	row.Scan(&db_password)
+	for row.Next() {
+		_ = row.Scan(&db_password)
+	}
 	fmt.Println(db_password)
 	row.Close()
 	if db_password != password {
@@ -190,7 +192,9 @@ func send_message(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		row, _ = db.Query("SELECT username FROM users WHERE username ='" + to_username + "'")
-		row.Scan(&db_username)
+		for row.Next() {
+			_ = row.Scan(&db_username)
+		}
 		row.Close()
 		fmt.Println(db_username)
 		if db_username == "" {
