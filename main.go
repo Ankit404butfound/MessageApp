@@ -37,8 +37,8 @@ func randomHex() string {
 
 func createTable(w http.ResponseWriter, r *http.Request) {
 	//_, err := db.Exec("DROP TABLE messages")
-	_, err := db.Exec("CREATE TABLE messages (msg_id SERIAL, from_username varchar(20), to_username varchar(20), message varchar(65000), status varchar(4))")
-
+	ins, err := db.Query("CREATE TABLE messages (msg_id SERIAL, from_username varchar(20), to_username varchar(20), message varchar(65000), status varchar(4))")
+	ins.Close()
 	//_, err := db.Exec("CREATE TABLE users (username varchar(20) PRIMARY KEY, password varchar(20), first_name varchar(255), last_name varchar(255))")
 	if err != nil {
 		fmt.Fprint(w, err)
@@ -56,7 +56,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	password := randomHex()
 	fmt.Printf("%s %s %s %d\n", f_name, l_name, password, userid)
 
-	_, err := db.Query("INSERT INTO users (username, password, first_name, last_name) VALUES ($1, $2, $3, $4)", username, password, f_name, l_name)
+	ins, err := db.Query("INSERT INTO users (username, password, first_name, last_name) VALUES ($1, $2, $3, $4)", username, password, f_name, l_name)
+	ins.Close()
 	if err != nil {
 		fmt.Fprint(w, "{status: 404, \"msg\": \""+err.Error()+"\"}")
 	} else {
@@ -70,21 +71,27 @@ func check_new_messages(w http.ResponseWriter, r *http.Request) {
 	username := string(r.FormValue("username"))
 	password := string(r.FormValue("password"))
 
-	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
+	row, _ := db.Query("SELECT password FROM users WHERE username ='" + username + "'")
+	for row.Next() {
+		row.Scan(&db_password)
+	}
+	row.Close()
 
 	if password != db_password {
 		fmt.Fprint(w, "{status: 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
 		return
 	}
 
-	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 and status = 'new'", username)
+	row, _ = db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 and status = 'new'", username)
 
 	for row.Next() {
 		var temp Message
 		_ = row.Scan(&temp.MSG_ID, &temp.FROM_USERNAME, &temp.TO_USERNAME, &temp.MESSAGE)
 		lst = append(lst, temp)
-		db.Exec("UPDATE messages set status = 'old' WHERE to_username = $1 and msg_id = $2", username, temp.MSG_ID)
+		temp_row, _ := db.Query("UPDATE messages set status = 'old' WHERE to_username = $1 and msg_id = $2", username, temp.MSG_ID)
+		temp_row.Close()
 	}
+	row.Close()
 	jsn, _ := json.Marshal(lst)
 	if len(lst) > 0 {
 		fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
@@ -99,20 +106,25 @@ func check_all_messages(w http.ResponseWriter, r *http.Request) {
 	username := string(r.FormValue("username"))
 	password := string(r.FormValue("password"))
 
-	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
+	row, _ := db.Query("SELECT password FROM users WHERE username ='" + username + "'")
+	for row.Next() {
+		row.Scan(&db_password)
+	}
+	row.Close()
 	fmt.Println(username)
 	if password != db_password {
 		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
 		return
 	}
 
-	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 or from_username = $1", username)
+	row, _ = db.Query("SELECT msg_id, from_username, to_username, message FROM messages WHERE to_username = $1 or from_username = $1", username)
 
 	for row.Next() {
 		var temp Message
 		_ = row.Scan(&temp.MSG_ID, &temp.FROM_USERNAME, &temp.TO_USERNAME, &temp.MESSAGE)
 		lst = append(lst, temp)
 	}
+	row.Close()
 	jsn, _ := json.Marshal(lst)
 	if len(lst) > 0 {
 		fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
@@ -128,20 +140,25 @@ func check_messages_for_particular_user(w http.ResponseWriter, r *http.Request) 
 	password := string(r.FormValue("password"))
 	from_user := string(r.FormValue("from_user"))
 
-	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
+	row, _ := db.Query("SELECT password FROM users WHERE username ='" + username + "'")
+	for row.Next() {
+		row.Scan(&db_password)
+	}
+	row.Close()
 	fmt.Println(username)
 	if password != db_password {
 		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
 		return
 	}
 
-	row, _ := db.Query("SELECT msg_id, from_username, to_username, message FROM messages where from_username in ($1, $2) and to_username in ($1, $2) and status = 'old' ORDER BY msg_id", username, from_user)
+	row, _ = db.Query("SELECT msg_id, from_username, to_username, message FROM messages where from_username in ($1, $2) and to_username in ($1, $2) and status = 'old' ORDER BY msg_id", username, from_user)
 
 	for row.Next() {
 		var temp Message
 		_ = row.Scan(&temp.MSG_ID, &temp.FROM_USERNAME, &temp.TO_USERNAME, &temp.MESSAGE)
 		lst = append(lst, temp)
 	}
+	row.Close()
 	jsn, _ := json.Marshal(lst)
 	if len(lst) > 0 {
 		fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
@@ -156,18 +173,23 @@ func get_user(w http.ResponseWriter, r *http.Request) {
 	username := string(r.FormValue("username"))
 	password := string(r.FormValue("password"))
 
-	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
+	row, _ := db.Query("SELECT password FROM users WHERE username ='" + username + "'")
+	for row.Next() {
+		row.Scan(&db_password)
+	}
+	row.Close()
 
 	if password != db_password {
 		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
 		return
 	}
 
-	row, _ := db.Query("SELECT first_name, last_name FROM users WHERE username = $1", username)
+	row, _ = db.Query("SELECT first_name, last_name FROM users WHERE username = $1", username)
 
 	for row.Next() {
 		_ = row.Scan(&user.FIRSTNAME, &user.LASTNAME)
 	}
+	row.Close()
 	jsn, _ := json.Marshal(user)
 	fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
 }
@@ -221,6 +243,7 @@ func main() {
 	http.HandleFunc("/check_all_messages", check_all_messages)
 	http.HandleFunc("/check_messages_for_particular_user", check_messages_for_particular_user)
 	http.HandleFunc("/send_message", send_message)
+	http.HandleFunc("/get_user", get_user)
 	http.HandleFunc("/create", createTable)
 	http.HandleFunc("/register", createUser)
 	fmt.Println("SERVER STARTED!")
