@@ -151,7 +151,7 @@ func check_messages_for_particular_user(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	row, _ = db.Query("SELECT msg_id, from_username, to_username, message FROM messages where from_username in ($1, $2) and to_username in ($1, $2) and status = 'old' ORDER BY msg_id", username, from_user)
+	row, _ = db.Query("SELECT msg_id, from_username, to_username, message FROM messages where from_username in ($1, $2) and to_username in ($1, $2) ORDER BY msg_id", username, from_user)
 
 	for row.Next() {
 		var temp Message
