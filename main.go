@@ -14,12 +14,11 @@ import (
 
 var db, _ = sql.Open("postgres", os.Getenv("DATABASE_URL"))
 
-// type User struct {
-// 	username   string
-// 	password   string
-// 	first_name string
-// 	last_name  string
-// }
+type User struct {
+	USERNAME  string `json:"username"`
+	FIRSTNAME string `json:"first_name"`
+	LASTNAME  string `json:"last_name"`
+}
 
 type Message struct {
 	MSG_ID        int    `json:"msg_id"`
@@ -151,6 +150,28 @@ func check_messages_for_particular_user(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+func get_user(w http.ResponseWriter, r *http.Request) {
+	var user User
+	var db_password string
+	username := string(r.FormValue("username"))
+	password := string(r.FormValue("password"))
+
+	_ = db.QueryRow("SELECT password FROM users WHERE username ='" + username + "'").Scan(&db_password)
+
+	if password != db_password {
+		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME OR PASSWORD\"}")
+		return
+	}
+
+	row, _ := db.Query("SELECT first_name, last_name FROM users WHERE username = $1", username)
+
+	for row.Next() {
+		_ = row.Scan(&user.FIRSTNAME, &user.LASTNAME)
+	}
+	jsn, _ := json.Marshal(user)
+	fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
+}
+
 func send_message(w http.ResponseWriter, r *http.Request) {
 	var db_password string
 	var db_username string
@@ -179,6 +200,7 @@ func send_message(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	db.Close()
 }
 
 func main() {
