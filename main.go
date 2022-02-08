@@ -24,6 +24,8 @@ type Message struct {
 	MSG_ID        int    `json:"msg_id"`
 	FROM_USERNAME string `json:"from_username"`
 	TO_USERNAME   string `json:"to_username"`
+	FIRST_NAME    string `json:"first_name"`
+	LAST_NAME     string `json:"last_name"`
 	MESSAGE       string `json:"message"`
 }
 
@@ -90,6 +92,13 @@ func check_new_messages(w http.ResponseWriter, r *http.Request) {
 		lst = append(lst, temp)
 		temp_row, _ := db.Query("UPDATE messages set status = 'old' WHERE to_username = $1 and msg_id = $2", username, temp.MSG_ID)
 		temp_row.Close()
+
+		user_row, _ := db.Query("SELECT first_name, last_name, username FROM users WHERE username = $1", temp.FROM_USERNAME)
+
+		for user_row.Next() {
+			_ = user_row.Scan(&temp.FIRST_NAME, &temp.LAST_NAME)
+		}
+		user_row.Close()
 	}
 	row.Close()
 	jsn, _ := json.Marshal(lst)
@@ -192,9 +201,9 @@ func get_user(w http.ResponseWriter, r *http.Request) {
 	}
 	row.Close()
 	jsn, _ := json.Marshal(user)
-	if (user.USERNAME != ""){
+	if user.USERNAME != "" {
 		fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
-	}else{
+	} else {
 		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME\"}")
 		return
 	}
