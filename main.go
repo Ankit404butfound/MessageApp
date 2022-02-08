@@ -192,7 +192,12 @@ func get_user(w http.ResponseWriter, r *http.Request) {
 	}
 	row.Close()
 	jsn, _ := json.Marshal(user)
-	fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
+	if (user.USERNAME != ""){
+		fmt.Fprint(w, "{\"data\":"+string(jsn)+",\"status\":200, \"msg\": \"Success\"}")
+	}else{
+		fmt.Fprint(w, "{\"status\": 404, \"msg\": \"INVALID USERNAME\"}")
+		return
+	}
 }
 
 func send_message(w http.ResponseWriter, r *http.Request) {
