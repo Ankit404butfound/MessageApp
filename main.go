@@ -96,6 +96,7 @@ func check_new_messages(w http.ResponseWriter, r *http.Request) {
 		user_row, _ := db.Query("SELECT first_name, last_name FROM users WHERE username = $1", temp.FROM_USERNAME)
 
 		for user_row.Next() {
+			fmt.Println(user_row)
 			_ = user_row.Scan(&temp.FIRST_NAME, &temp.LAST_NAME)
 		}
 		user_row.Close()
