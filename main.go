@@ -93,7 +93,7 @@ func check_new_messages(w http.ResponseWriter, r *http.Request) {
 		temp_row, _ := db.Query("UPDATE messages set status = 'old' WHERE to_username = $1 and msg_id = $2", username, temp.MSG_ID)
 		temp_row.Close()
 
-		user_row, _ := db.Query("SELECT first_name, last_name, username FROM users WHERE username = $1", temp.FROM_USERNAME)
+		user_row, _ := db.Query("SELECT first_name, last_name FROM users WHERE username = $1", temp.FROM_USERNAME)
 
 		for user_row.Next() {
 			_ = user_row.Scan(&temp.FIRST_NAME, &temp.LAST_NAME)
